@@ -46,7 +46,7 @@ function init() {
       }
     });
   }
-  
+
   // check local storage
   if (typeof(Storage) !== "undefined") {
     if (localStorage.getItem(lsPrefix + "ordinary") !== null) {
@@ -85,8 +85,8 @@ function init() {
       localStorage.setItem(lsPrefix + "reward8", 8400);
     }
   }
-  
-  
+
+
   oBin1 = document.getElementById("bin1");
   oBin2 = document.getElementById("bin2");
   oBin3 = document.getElementById("bin3");
@@ -106,6 +106,133 @@ function storeLocal(i) {
   }
 }
 
+function initGameState(){
+  startOrdDice = parseInt(document.getElementById("ordinary").value);
+  startLuckDice = parseInt(document.getElementById("lucky").value);
+  startStars = parseInt(document.getElementById("stars").value);
+  startPos = parseInt(document.getElementById("startPos").value);
+  startMushroom1 = parseInt(document.getElementById("mushroom1").value);
+  startMushroom2 = parseInt(document.getElementById("mushroom2").value);
+  startMushroom3 = parseInt(document.getElementById("mushroom3").value);
+  startMoveBackwards = false;
+  startDoubleStars = false;
+  startDoubleNextRoll = false;
+  startRollTwice = false;
+
+  switch (document.getElementById("activeTarot").value) {
+    case "MoveBackwards":
+      startMoveBackwards = true;
+      break;
+
+    case "DoubleStars":
+      startDoubleStars = true;
+      break;
+
+    case "DoubleNextRoll":
+      startDoubleNextRoll = true;
+      break;
+
+    case "RollTwice":
+      startRollTwice = true;
+      break;
+  }
+}
+
+function getNextMove(){
+  initGameState()
+
+  var binNum;
+  var ordDice;
+  var luckDice;
+  var stars;
+  var pos;
+  var tarot;
+  var potentials;
+  var doubleNextRoll;
+  var moveBackwards;
+  var doubleStars;
+  var rollTwice;
+  var roll;
+
+  var boardState = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+  ordDice = startOrdDice;
+  luckDice = startLuckDice;
+  stars = startStars;
+  pos = startPos;
+
+  boardState[4] = 2 + startMushroom1;
+  boardState[11] = 2 + startMushroom2;
+  boardState[18] = 2 + startMushroom3;
+
+  doubleNextRoll = startDoubleNextRoll;
+  moveBackwards = startMoveBackwards;
+  doubleStars = startDoubleStars;
+  rollTwice = startRollTwice;
+
+  diceUsed = "lucky"
+  luckyNumberSelected = 0
+
+  if (luckDice > 1 && boardState[18] < 5 && pos < 18 && pos >= 12) {
+    luckyNumberSelected = 18 - pos;
+
+  } else if (luckDice > 1 && boardState[18] == 5 && boardState[11] < 5 && pos < 11 && pos >= 5) {
+    luckyNumberSelected = 11 - pos;
+
+  } else if (luckDice > 1 && boardState[18] == 5 && boardState[11] == 5 && boardState[4] < 5 && pos < 4) {
+    luckyNumberSelected = 4 - pos;
+
+  } else if (luckDice > 1 && boardState[18] == 5 && boardState[11] == 5 && boardState[4] < 5 && pos >= 19) {
+    luckyNumberSelected = 20 - pos + 4;
+
+  } else if (luckDice > 1 && boardState[18] == 5 && boardState[11] == 5 && boardState[4] == 5 && pos < 5 ) {
+    luckyNumberSelected = 5 - pos;
+
+  } else if (luckDice > 1 && boardState[18] == 5 && boardState[11] == 5 && boardState[4] == 5 && pos >= 19 ) {
+    luckyNumberSelected = 20 - pos + 5
+
+  } else if (luckDice > 0 && pos == 10 && doubleNextRoll) {
+    luckyNumberSelected = 5;
+
+  } else if (luckDice > 0 && pos == 10 && rollTwice) {
+    luckyNumberSelected = 10
+
+  } else if (luckDice > 0 && pos != 15 && pos < 19 && pos >= 14) {
+    luckyNumberSelected = 20 - pos;
+
+  } else if (luckDice > 0 && ordDice <= 3 && pos == 20) {
+    luckyNumberSelected = 5;
+
+  } else if (luckDice > 0 && ordDice <= 3 && pos == 0) {
+    luckyNumberSelected = 5;
+
+  } else if (luckDice > 0 && ordDice <= 2 && pos == 1) {
+    luckyNumberSelected = 4;
+
+  } else if (luckDice > 0 && ordDice <= 1 && pos == 2) {
+    luckyNumberSelected = 3;
+
+  } else if (ordDice == 0) {
+    if (pos == 15) {
+      luckyNumberSelected = 4;
+    } else if (pos == 10 && moveBackwards) {
+      luckyNumberSelected = 1;
+    } else if (pos == 20) {
+      luckyNumberSelected = 5;
+    } else if (pos < 5) {
+      luckyNumberSelected = 5 - pos;
+    } else {
+      luckyNumberSelected = 6;
+    }
+
+  } else {
+    diceUsed = "ordinary";
+  }
+
+  if(diceUsed == "ordinary")
+    document.getElementById("next-move").innerHTML = `Use an ordinary dice`
+  else
+    document.getElementById("next-move").innerHTML = `Use a lucky dice and select ${luckyNumberSelected}`
+}
 
 function runImpSim() {
   if (!(simRunning)) {
@@ -113,38 +240,9 @@ function runImpSim() {
     simNum = 0;
     totalStars = 0;
     simRunning = true;
-    
-    // get starting conditions
-    startOrdDice = parseInt(document.getElementById("ordinary").value);
-    startLuckDice = parseInt(document.getElementById("lucky").value);
-    startStars = parseInt(document.getElementById("stars").value);
-    startPos = parseInt(document.getElementById("startPos").value);
-    startMushroom1 = parseInt(document.getElementById("mushroom1").value);
-    startMushroom2 = parseInt(document.getElementById("mushroom2").value);
-    startMushroom3 = parseInt(document.getElementById("mushroom3").value);
-    startMoveBackwards = false;
-    startDoubleStars = false;
-    startDoubleNextRoll = false;
-    startRollTwice = false;
-    
-    switch (document.getElementById("activeTarot").value) {
-      case "MoveBackwards":
-        startMoveBackwards = true;
-        break;
-        
-      case "DoubleStars":
-        startDoubleStars = true;
-        break;
-        
-      case "DoubleNextRoll":
-        startDoubleNextRoll = true;
-        break;
-        
-      case "RollTwice":
-        startRollTwice = true;
-        break;
-    }
-    
+
+    initGameState();
+
     setTimeout(nextSimBlock, 1);
   }
 }
@@ -152,7 +250,6 @@ function runImpSim() {
 function nextSimBlock() {
   if (simNum < totalSims) {
     var binNum;
-    
     var ordDice;
     var luckDice;
     var stars;
@@ -164,9 +261,9 @@ function nextSimBlock() {
     var doubleStars;
     var rollTwice;
     var roll;
-    
+
     var boardState = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-    
+
     // simulate
     for (var i = 0; i < 1000; i++) {
       // reset starting conditions
@@ -174,73 +271,73 @@ function nextSimBlock() {
       luckDice = startLuckDice;
       stars = startStars;
       pos = startPos;
-      
+
       boardState[4] = 2 + startMushroom1;
       boardState[11] = 2 + startMushroom2;
       boardState[18] = 2 + startMushroom3;
-      
+
       doubleNextRoll = startDoubleNextRoll;
       moveBackwards = startMoveBackwards;
       doubleStars = startDoubleStars;
       rollTwice = startRollTwice;
-      
-      
+
+
       // simulate
       while (ordDice > 0 || luckDice > 0) {
         // decide which dice to use
         if (luckDice > 1 && boardState[18] < 5 && pos < 18 && pos >= 12) {
           luckDice--;
           roll = 18 - pos;
-          
+
         } else if (luckDice > 1 && boardState[18] == 5 && boardState[11] < 5 && pos < 11 && pos >= 5) {
           luckDice--;
           roll = 11 - pos;
-          
+
         } else if (luckDice > 1 && boardState[18] == 5 && boardState[11] == 5 && boardState[4] < 5 && pos < 4) {
           luckDice--;
           roll = 4 - pos;
-          
+
         } else if (luckDice > 1 && boardState[18] == 5 && boardState[11] == 5 && boardState[4] < 5 && pos >= 19) {
           luckDice--;
           roll = 20 - pos + 4;
-          
+
         } else if (luckDice > 1 && boardState[18] == 5 && boardState[11] == 5 && boardState[4] == 5 && pos < 5 ) {
           luckDice--;
           roll = 5 - pos;
-          
+
         } else if (luckDice > 1 && boardState[18] == 5 && boardState[11] == 5 && boardState[4] == 5 && pos >= 19 ) {
           luckDice--;
           roll = 20 - pos + 5;
-          
+
         } else if (luckDice > 0 && pos == 10 && doubleNextRoll) {
           luckDice--;
           roll = 5;
-          
+
         } else if (luckDice > 0 && pos == 10 && rollTwice) {
           rollTwice = false;
           luckDice--;
           roll = 10;
-          
+
         } else if (luckDice > 0 && pos != 15 && pos < 19 && pos >= 14) {
           luckDice--;
           roll = 20 - pos;
-          
+
         } else if (luckDice > 0 && ordDice <= 3 && pos == 20) {
           luckDice--;
           roll = 5;
-          
+
         } else if (luckDice > 0 && ordDice <= 3 && pos == 0) {
           luckDice--;
           roll = 5;
-          
+
         } else if (luckDice > 0 && ordDice <= 2 && pos == 1) {
           luckDice--;
           roll = 4;
-          
+
         } else if (luckDice > 0 && ordDice <= 1 && pos == 2) {
           luckDice--;
           roll = 3;
-          
+
         } else if (ordDice == 0) {
           luckDice--;
           if (pos == 15) {
@@ -254,33 +351,33 @@ function nextSimBlock() {
           } else {
             roll = 6;
           }
-          
+
         } else {
           ordDice--;
           roll = Math.floor(Math.random() * 6 + 1);
-          
+
           if (rollTwice) {
             rollTwice = false;
             roll += Math.floor(Math.random() * 6 + 1);
           }
         }
-        
+
         // double next roll tarot active
         if (doubleNextRoll) {
           doubleNextRoll = false;
           roll *= 2;
         }
-        
+
         // resolve roll
         if (pos == 15 && roll % 2 == 1) {
           // odd number on karma
           pos -= roll;
-          
+
         } else if (moveBackwards) {
           // move backwards tarot
           moveBackwards = false;
           pos -= roll;
-          
+
         } else {
           // check starry mushrooms
           if (pos < 4 && pos + roll >= 4) {
@@ -288,23 +385,23 @@ function nextSimBlock() {
           } else if(pos >= 18 && roll >= (6 - pos + 18)) {
             stars += boardState[4];
           }
-          
+
           if (pos < 11 && pos + roll >= 11) {
             stars += boardState[11];
-            
+
             if (doubleStars) {
               doubleStars = false;
               stars += boardState[11];
             }
           }
-          
+
           if (pos < 18 && pos + roll >= 18) {
             stars += boardState[18];
           }
-          
+
           // resolve current location
           pos = ((pos + roll - 1) % 20) + 1;
-          
+
           if (pos == 5) {
             ordDice++;
           } else if (pos == 20) {
@@ -312,13 +409,13 @@ function nextSimBlock() {
           } else if (pos == 10) {
             // tarot card
             tarot = Math.floor(Math.random() * 9 + 1);
-            
+
             if (tarot == 1) {
               potentials = [];
               if (boardState[4] < 5) { potentials.push([4, Math.random()]); }
               if (boardState[11] < 5) { potentials.push([11, Math.random()]); }
               if (boardState[18] < 5) { potentials.push([18, Math.random()]); }
-              
+
               if (potentials.length > 0) {
                 potentials.sort(function(a,b) {
                   if (a[1] < b[1]) {
@@ -327,16 +424,16 @@ function nextSimBlock() {
                     return 1;
                   }
                 });
-                
+
                 boardState[potentials[0][0]]++;
               }
-              
+
             } else if (tarot == 2) {
               potentials = [];
               if (boardState[4] > 3) { potentials.push([4, Math.random()]); }
               if (boardState[11] > 3) { potentials.push([11, Math.random()]); }
               if (boardState[18] > 3) { potentials.push([18, Math.random()]); }
-              
+
               if (potentials.length > 0) {
                 potentials.sort(function(a,b) {
                   if (a[1] < b[1]) {
@@ -345,10 +442,10 @@ function nextSimBlock() {
                     return 1;
                   }
                 });
-                
+
                 boardState[potentials[0][0]]--;
               }
-              
+
             } else if (tarot == 3) {
               moveBackwards = true;
             } else if (tarot == 5) {
@@ -360,17 +457,17 @@ function nextSimBlock() {
             } else if (tarot == 9) {
               rollTwice = true;
             }
-            
+
           } else if (pos == 4 || pos == 11 || pos == 18) {
             if (boardState[pos] < 5) { boardState[pos]++; }
           }
         }
       }
-      
-      
+
+
       // update results
       totalStars += stars;
-      
+
       if (stars < 80) {
         binNum = 0;
       } else if (stars < 110) {
@@ -390,37 +487,37 @@ function nextSimBlock() {
       } else if (stars >= 300) {
         binNum = 8;
       }
-      
+
       arrResults[binNum]++;
       simNum++;
     }
-    
+
     // update results and expected values
     var percent;
     for (var i = 0; i < 9; i++) {
       percent = 100.0 * arrResults[i] / totalSims;
       arrBins[i].innerHTML = percent.toFixed(4) + "%&nbsp;";
-      
+
       if (Math.round(percent) < 1) {
         arrBins[i].style.width = "1%";
       } else {
         arrBins[i].style.width = Math.round(percent) + "%";
       }
     }
-    
-    
-    
+
+
+
     setTimeout(nextSimBlock, 1);
-    
+
   } else {
     simRunning = false;
-    
+
     var runningSum = 0;
     for (var i = 8; i > 0; i--) {
       runningSum += arrResults[i];
       document.getElementById("chance" + i).innerHTML = (runningSum / totalSims * 100).toFixed(4);
     }
-      
+
     updateValues();
     document.getElementById("avgStars").innerHTML = (1.0 * totalStars / totalSims).toFixed(4);
   }
@@ -435,7 +532,7 @@ function updateValues() {
   var threshholds = [0, 80, 110, 140, 170, 200, 230, 260, 300];
   var chance;
   var expValue;
-  
+
   for (var i = 1; i <= 8; i++) {
     if (currentStars >= threshholds[i]) {
       document.getElementById("value" + i).innerHTML = 0;
